@@ -3,6 +3,7 @@ package consul
 import (
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/hashicorp/consul/api"
 	"google.golang.org/grpc"
 	"log"
@@ -47,7 +48,7 @@ func RunRPCServiceAndRegistry(service *grpc.Server, port string, config *api.Con
 	DeregisterService(reg)
 	return
 }
-func RunWebServiceAndRegistry(service http.Handler, port string, config *api.Config, reg *api.AgentServiceRegistration) (err error) {
+func RunWebServiceAndRegistry(service *gin.Engine, port string, config *api.Config, reg *api.AgentServiceRegistration) (err error) {
 	var p int
 	p, err = strconv.Atoi(strings.TrimPrefix(port, ":"))
 	if err != nil {
@@ -56,19 +57,29 @@ func RunWebServiceAndRegistry(service http.Handler, port string, config *api.Con
 	}
 	Port = p
 	if reg.Check == nil {
-		var path string
+		var ip string
 		if reg.Address == "" {
-			path = "localhost"
+			ip = "localhost"
+		}else{
+			ip = reg.Address
 		}
+		router := "http://" + ip + port+"/consul_check/health"
 		reg.Check = &api.AgentServiceCheck{
 			Interval: "5s",
-			HTTP:     "http://" + path + port+"/consul_check/health",
+			HTTP:     router,
 		}
 	}
 	err = RegisterService(config, reg)
 	if err != nil {
 		return
 	}
+
+	//初始化健康检测路由
+	service.GET("/consul_check/health", func(c *gin.Context) {
+		c.JSON(200,gin.H{
+			"statue":"ok",
+		})
+	})
 
 	errc := make(chan error)
 	go func() {
