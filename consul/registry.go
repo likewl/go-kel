@@ -34,10 +34,10 @@ func RegisterService(config *api.Config, reg *api.AgentServiceRegistration) (err
 		return err
 	}
 	//初始化参数
-	if reg.Address == "" {
-		localIP, _ := ip.GetIP()
-		reg.Address = localIP
-	}
+	//if reg.Address == "" {
+	//	localIP, _ := ip.GetIP()
+	//	reg.Address = localIP
+	//}
 
 	if reg.ID == "" {
 		if reg.Name != "" {
