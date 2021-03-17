@@ -8,7 +8,8 @@ import (
 	"strconv"
 )
 
-func GetService(serviceName string, tag string, q *api.QueryOptions) (*api.CatalogService, error) {
+//getService 从consul获取以随机的方式获取服务
+func getService(serviceName string, tag string, q *api.QueryOptions) (*api.CatalogService, error) {
 	result, _, err := Client.Catalog().Service(serviceName, tag, q)
 	if err != nil {
 		return nil, err
@@ -19,8 +20,10 @@ func GetService(serviceName string, tag string, q *api.QueryOptions) (*api.Catal
 	service := result[rand.Int()%len(result)]
 	return service, nil
 }
+
+//GetClientConn 从consul获取客户端连接
 func GetClientConn(serviceName string, tag string, q *api.QueryOptions, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-	client, err := GetService(serviceName, tag, q)
+	client, err := getService(serviceName, tag, q)
 	if err != nil {
 		return nil, err
 	}

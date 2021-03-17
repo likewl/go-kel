@@ -12,8 +12,8 @@ var (
 	Client *api.Client
 	Port   = 8000
 )
-
-func NewClient(config *api.Config) (*api.Client, error) {
+//newClient 从 config 中配置中获取一个注册中心
+func newClient(config *api.Config) (*api.Client, error) {
 
 	//如果没有设置consul地址
 	//默认初始化 ::8500
@@ -28,8 +28,9 @@ func NewClient(config *api.Config) (*api.Client, error) {
 	Client, err = api.NewClient(config)
 	return Client, err
 }
-func RegisterService(config *api.Config, reg *api.AgentServiceRegistration) (err error) {
-	Client, err = NewClient(config)
+//registerService 注册服务到注册中心
+func registerService(config *api.Config, reg *api.AgentServiceRegistration) (err error) {
+	Client, err = newClient(config)
 	if err != nil {
 		return err
 	}
@@ -68,7 +69,8 @@ func RegisterService(config *api.Config, reg *api.AgentServiceRegistration) (err
 	fmt.Printf("Register Service success addr: %s:%d\n", reg.Address, reg.Port)
 	return nil
 }
-func DeregisterService(reg *api.AgentServiceRegistration) {
+//DeregisterService 反注册，从 consul 中删除服务
+func deregisterService(reg *api.AgentServiceRegistration) {
 	Client.Agent().ServiceDeregister(reg.ID)
 	fmt.Printf("Service:%s Deregister success",reg.ID)
 }
