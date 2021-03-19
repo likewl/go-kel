@@ -94,8 +94,8 @@ func RunWebServiceAndRegistry(r *gin.Engine,grpcSvc *grpc.Server, port string, c
 	go func() {
 		
 		fmt.Println("service run success")
-		errc <- http.ListenAndServe(":8972", grpcHandlerFunc(grpcSvc, r))
-
+		errc <- http.ListenAndServe(port, grpcHandlerFunc(grpcSvc, r))
+		
 	}()
 	err = <-errc
 	deregisterService(reg)
@@ -104,12 +104,12 @@ func RunWebServiceAndRegistry(r *gin.Engine,grpcSvc *grpc.Server, port string, c
 //grpcHandlerFunc 方法是对restful和grpc请求的一个分流判断，
 //使用 h2c.NewHandler 方法进行了特殊处理，并返回一个 http.Handler ，
 //主要的内部逻辑是拦截了所有 h2c 流量，然后根据不同的请求流量类型将其劫持并重定向到相应的 Hander 中去处理。
-func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handler {
+func grpcHandlerFunc(grpcServer *grpc.Server, httpHandler http.Handler) http.Handler {
 	return h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 			grpcServer.ServeHTTP(w, r)
 		} else {
-			otherHandler.ServeHTTP(w, r)
+			httpHandler.ServeHTTP(w, r)
 		}
 	}), &http2.Server{})
 }
